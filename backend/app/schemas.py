@@ -1,0 +1,106 @@
+from __future__ import annotations
+
+from datetime import date
+from pydantic import BaseModel, Field
+from .models import DayStatus, Role
+
+
+class DepartmentBase(BaseModel):
+    name: str
+
+
+class DepartmentCreate(DepartmentBase):
+    pass
+
+
+class DepartmentOut(DepartmentBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class UserBase(BaseModel):
+    display_name: str
+    email: str
+    role: Role = Role.employee
+    annual_remote_limit: int = 100
+    department_id: int | None = None
+
+
+class UserCreate(UserBase):
+    pass
+
+
+class UserOut(UserBase):
+    id: int
+    department: DepartmentOut | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class CalendarDayOut(BaseModel):
+    id: int
+    date: date
+    weekday_name: str
+    is_weekend: bool
+    is_holiday: bool
+
+    class Config:
+        from_attributes = True
+
+
+class CalendarMonthOut(BaseModel):
+    id: int
+    year: int
+    month: int
+    is_locked: bool
+    days: list[CalendarDayOut]
+
+    class Config:
+        from_attributes = True
+
+
+class DayStatusUpdate(BaseModel):
+    date: date
+    status: DayStatus
+
+
+class UserCalendarUpdate(BaseModel):
+    items: list[DayStatusUpdate] = Field(default_factory=list)
+
+
+class UserDayStatusOut(BaseModel):
+    date: date
+    status: DayStatus
+
+
+class UserCalendarOut(BaseModel):
+    user: UserOut
+    month: CalendarMonthOut
+    items: list[UserDayStatusOut]
+
+
+class TeamRowOut(BaseModel):
+    user: UserOut
+    statuses: dict[date, DayStatus | None]
+    remote_remaining_start: int
+    remote_remaining_end: int
+
+
+class TeamCalendarOut(BaseModel):
+    month: CalendarMonthOut
+    rows: list[TeamRowOut]
+
+
+class RemoteCounterOut(BaseModel):
+    year: int
+    used: int
+    limit: int
+    remaining: int
+
+
+class WhoIsInOfficeOut(BaseModel):
+    date: date
+    by_status: dict[DayStatus, list[UserOut]]

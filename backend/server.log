@@ -1,0 +1,50 @@
+nohup: ignoring input
+INFO:     Started server process [256382]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:50056 - "GET /departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50050 - "GET /calendar/2026/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50062 - "GET /users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50062 - "GET /users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50078 - "GET /departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50072 - "GET /calendar/2026/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52224 - "GET /me/remote-counter?year=2026 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52216 - "GET /users/1/calendar/2026/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44826 - "OPTIONS /users/1/calendar/2026/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44836 - "GET /me/remote-counter?year=2026 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44842 - "GET /users/1/calendar/2026/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44842 - "GET /users/1/calendar/2026/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58624 - "OPTIONS /users/1/calendar/2026/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58630 - "PUT /users/1/calendar/2026/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58630 - "GET /me/remote-counter?year=2026 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58646 - "GET /departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58632 - "GET /calendar/2026/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58632 - "GET /users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58662 - "GET /departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58646 - "GET /calendar/2026/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58632 - "GET /users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58632 - "GET /calendar/2026/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58646 - "GET /departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58632 - "GET /departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58646 - "GET /calendar/2026/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38122 - "GET /departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38106 - "GET /calendar/2026/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57298 - "GET /me/remote-counter?year=2026 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57288 - "GET /users/1/calendar/2026/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57298 - "GET /me/remote-counter?year=2026 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57288 - "GET /users/1/calendar/2026/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "PUT /users/1/calendar/2026/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /me/remote-counter?year=2026 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42960 - "GET /departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42956 - "GET /calendar/2026/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50396 - "GET /departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50386 - "GET /calendar/2026/4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50396 - "GET /departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50386 - "GET /calendar/2026/5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50396 - "GET /departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50386 - "GET /calendar/2026/3 HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [256382]
