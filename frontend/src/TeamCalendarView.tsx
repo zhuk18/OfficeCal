@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import * as XLSX from "xlsx";
 import CreateUserForm from "./CreateUserForm";
 
 type DayStatus =
@@ -111,6 +112,50 @@ export default function TeamCalendarView() {
     });
   }, [calendar, search, department]);
 
+  const handleExportToExcel = () => {
+    if (!calendar) return;
+
+    const monthName = new Date(year, month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    
+    // Build header row
+    const header = [
+      "Employee",
+      "Department",
+      "Remote left (start)",
+      ...calendar.month.days.map((day) => {
+        const dateObj = new Date(day.date);
+        return `${dateObj.getDate()} ${day.weekday_name}`;
+      }),
+      "Remote left (end)",
+    ];
+
+    // Build data rows
+    const data = filteredRows.map((row) => [
+      row.user.display_name,
+      row.user.department?.name || "",
+      row.remote_remaining_start,
+      ...calendar.month.days.map((day) => {
+        const status = row.statuses[day.date];
+        return status ? statusLabels[status as DayStatus][0] : "";
+      }),
+      row.remote_remaining_end,
+    ]);
+
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet([header, ...data]);
+    
+    // Set column widths
+    const colWidths = [20, 20, 15, ...calendar.month.days.map(() => 12), 15];
+    ws["!cols"] = colWidths.map((width) => ({ wch: width }));
+
+    // Create workbook and add worksheet
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, monthName);
+
+    // Export
+    XLSX.writeFile(wb, `OfficeCal-${year}-${String(month).padStart(2, "0")}.xlsx`);
+  };
+
   return (
     <>
       <header className="header">
@@ -118,6 +163,20 @@ export default function TeamCalendarView() {
           <h1>Team Calendar</h1>
           <p>Company-wide monthly view (read-only)</p>
         </div>
+        <button
+          onClick={handleExportToExcel}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#4CAF50",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "14px",
+          }}
+        >
+          📥 Export to Excel
+        </button>
       </header>
 
       <section className="card filters-with-legend">
@@ -188,6 +247,7 @@ export default function TeamCalendarView() {
               <thead>
                 <tr>
                   <th>Employee</th>
+                  <th>Department</th>
                   <th>Remote left (start)</th>
                   {calendar.month.days.map((day) => (
                     <th key={day.id} className={day.is_weekend ? "weekend-header" : ""}>
@@ -202,6 +262,7 @@ export default function TeamCalendarView() {
                 {filteredRows.map((row) => (
                   <tr key={row.user.id}>
                     <td>{row.user.display_name}</td>
+                    <td>{row.user.department?.name || "—"}</td>
                     <td>{row.remote_remaining_start}</td>
                     {calendar.month.days.map((day) => {
                       const status = row.statuses[day.date] as DayStatus | undefined;
