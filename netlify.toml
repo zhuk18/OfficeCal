@@ -1,16 +1,11 @@
 [build]
+  base = "frontend"
   command = "npm run build"
-  functions = "frontend/functions"
-  publish = "frontend/dist"
+  publish = "dist"
 
 [dev]
-  command = "npm run dev --prefix frontend"
+  command = "npm run dev"
   port = 5173
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
 
 [[redirects]]
   from = "/*"
