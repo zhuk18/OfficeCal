@@ -161,7 +161,6 @@ export default function TeamCalendarView() {
       <header className="header">
         <div>
           <h1>Team Calendar</h1>
-          <p>Company-wide monthly view (read-only)</p>
         </div>
         <button
           onClick={handleExportToExcel}
