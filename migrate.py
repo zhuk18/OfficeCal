@@ -30,6 +30,16 @@ def migrate_database():
                 connection.commit()
                 print("✓ Added additional_vacation_days column")
         
+        # Check if user_day_statuses table exists and add note column if missing
+        if 'user_day_statuses' in inspector.get_table_names():
+            status_columns = [col['name'] for col in inspector.get_columns('user_day_statuses')]
+            
+            if 'note' not in status_columns:
+                print("Adding note column to user_day_statuses table...")
+                connection.execute(text("ALTER TABLE user_day_statuses ADD COLUMN note VARCHAR(500) NULL"))
+                connection.commit()
+                print("✓ Added note column")
+        
         # Create all tables (will skip existing ones)
         Base.metadata.create_all(bind=engine)
         print("✓ Database schema is up to date")

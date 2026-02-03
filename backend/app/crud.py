@@ -148,6 +148,21 @@ def get_statuses_for_month(
     return result
 
 
+def get_notes_for_month(
+    db: Session,
+    month: models.CalendarMonth,
+) -> dict[int, dict[date, str | None]]:
+    statuses = db.scalars(
+        select(models.UserDayStatus)
+        .join(models.CalendarDay)
+        .where(models.CalendarDay.month_id == month.id)
+    ).all()
+    result: dict[int, dict[date, str | None]] = {}
+    for entry in statuses:
+        result.setdefault(entry.user_id, {})[entry.day.date] = entry.note
+    return result
+
+
 def delete_user_month_statuses(db: Session, user_id: int, month: models.CalendarMonth) -> None:
     """Delete all status entries for a user in a specific month."""
     from sqlalchemy import delete

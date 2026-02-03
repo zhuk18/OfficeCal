@@ -38,6 +38,7 @@ type TeamCalendar = {
   rows: {
     user: User;
     statuses: Record<string, DayStatus | null>;
+    notes: Record<string, string | null>;
     remote_remaining_start: number;
     remote_remaining_end: number;
   }[];
@@ -82,6 +83,9 @@ export default function TeamCalendarView() {
   const [department, setDepartment] = useState("all");
   const [refreshKey, setRefreshKey] = useState(0);
   const [allDepartments, setAllDepartments] = useState<{ id: number; name: string }[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [editingNote, setEditingNote] = useState<{ userId: number; date: string } | null>(null);
+  const [noteText, setNoteText] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -95,8 +99,45 @@ export default function TeamCalendarView() {
       .then((data: { id: number; name: string }[]) => setAllDepartments(data))
       .catch(() => setAllDepartments([]));
 
+    // Fetch current user
+    fetch(`${API_URL}/users`, {
+      headers: { "X-User-Id": "1" },
+      signal: controller.signal,
+    })
+      .then((res) => res.json())
+      .then((users: User[]) => {
+        if (users.length > 0) {
+          setCurrentUser(users[0]);
+        }
+      })
+      .catch(() => {});
+
     return () => controller.abort();
   }, [year, month, refreshKey]);
+
+  const handleSaveNote = async (userId: number, date: string) => {
+    try {
+      const res = await fetch(
+        `${API_URL}/users/${userId}/calendar/${year}/${month}/${date}/note`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-User-Id": "1",
+          },
+          body: JSON.stringify({ note: noteText }),
+        }
+      );
+
+      if (res.ok) {
+        setEditingNote(null);
+        setNoteText("");
+        setRefreshKey((k) => k + 1);
+      }
+    } catch (error) {
+      console.error("Error saving note:", error);
+    }
+  };
 
   const filteredRows = useMemo(() => {
     if (!calendar) return [];
@@ -266,14 +307,72 @@ export default function TeamCalendarView() {
                     {calendar.month.days.map((day) => {
                       const today = new Date().toISOString().split('T')[0];
                       const status = row.statuses[day.date] as DayStatus | undefined;
+                      const note = row.notes[day.date];
                       const isWeekend = day.is_weekend;
                       const isToday = day.date === today;
+                      const isEditing = editingNote?.userId === row.user.id && editingNote?.date === day.date;
+                      const isAdmin = currentUser?.role === "admin";
+
                       return (
                         <td
                           key={day.id}
                           className={`${status ? statusClass[status] : "status-empty"} ${isToday ? "today-cell" : isWeekend ? "weekend-cell" : ""}`}
+                          style={{ position: "relative", cursor: isAdmin ? "pointer" : "default" }}
+                          onDoubleClick={() => {
+                            if (isAdmin && !calendar?.month?.is_locked) {
+                              setEditingNote({ userId: row.user.id, date: day.date });
+                              setNoteText(note || "");
+                            }
+                          }}
+                          title={note || ""}
                         >
-                          {status ? statusLabels[status][0] : ""}
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={noteText}
+                              onChange={(e) => setNoteText(e.target.value)}
+                              onBlur={() => handleSaveNote(row.user.id, day.date)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleSaveNote(row.user.id, day.date);
+                                }
+                                if (e.key === "Escape") {
+                                  setEditingNote(null);
+                                  setNoteText("");
+                                }
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                              maxLength={500}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                border: "none",
+                                padding: "2px",
+                                fontSize: "11px",
+                              }}
+                            />
+                          ) : (
+                            <>
+                              {status ? statusLabels[status][0] : ""}
+                              {note && (
+                                <div
+                                  style={{
+                                    fontSize: "8px",
+                                    color: "inherit",
+                                    marginTop: "2px",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    maxWidth: "100%",
+                                  }}
+                                  title={note}
+                                >
+                                  📝
+                                </div>
+                              )}
+                            </>
+                          )}
                         </td>
                       );
                     })}

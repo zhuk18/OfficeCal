@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from .database import Base, SessionLocal, engine
 from . import crud, models, schemas
@@ -207,6 +208,7 @@ def get_team_calendar(year: int, month: int, db: Session = Depends(get_db)):
     month_obj = crud.get_or_create_month(db, year, month)
     users = db.query(models.User).order_by(models.User.display_name).all()
     status_map = crud.get_statuses_for_month(db, month_obj)
+    notes_map = crud.get_notes_for_month(db, month_obj)
 
     month_start = min(day.date for day in month_obj.days)
     month_end = max(day.date for day in month_obj.days)
@@ -223,12 +225,53 @@ def get_team_calendar(year: int, month: int, db: Session = Depends(get_db)):
             schemas.TeamRowOut(
                 user=user,
                 statuses=status_map.get(user.id, {}),
+                notes=notes_map.get(user.id, {}),
                 remote_remaining_start=remaining_start,
                 remote_remaining_end=remaining_end,
             )
         )
 
     return schemas.TeamCalendarOut(month=month_obj, rows=rows)
+
+
+@app.put("/users/{user_id}/calendar/{year}/{month}/{day_date}/note", response_model=dict)
+def update_day_note(
+    user_id: int,
+    year: int,
+    month: int,
+    day_date: date,
+    payload: dict,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
+    """Admin endpoint to update a note for a specific day"""
+    month_obj = crud.get_or_create_month(db, year, month)
+    day = next((d for d in month_obj.days if d.date == day_date), None)
+    if not day:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Day not found")
+    
+    user_day_status = db.scalar(
+        select(models.UserDayStatus)
+        .where(models.UserDayStatus.user_id == user_id)
+        .where(models.UserDayStatus.day_id == day.id)
+    )
+    
+    if not user_day_status:
+        # If no status exists, create one with office status
+        user_day_status = models.UserDayStatus(
+            user_id=user_id,
+            day_id=day.id,
+            status=models.DayStatus.office,
+            note=payload.get("note")
+        )
+        db.add(user_day_status)
+    else:
+        user_day_status.note = payload.get("note")
+        db.add(user_day_status)
+    
+    db.commit()
+    db.refresh(user_day_status)
+    return {"success": True, "note": user_day_status.note}
 
 
 @app.get("/who-is-in-office", response_model=schemas.WhoIsInOfficeOut)

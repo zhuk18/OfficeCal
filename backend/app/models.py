@@ -83,6 +83,7 @@ class UserDayStatus(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     day_id: Mapped[int] = mapped_column(ForeignKey("calendar_days.id"))
     status: Mapped[DayStatus] = mapped_column(Enum(DayStatus))
+    note: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     user: Mapped[User] = relationship("User", back_populates="statuses")
     day: Mapped[CalendarDay] = relationship("CalendarDay", back_populates="statuses")

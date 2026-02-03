@@ -77,6 +77,7 @@ class CalendarMonthOut(BaseModel):
 class DayStatusUpdate(BaseModel):
     date: date
     status: DayStatus
+    note: str | None = None
 
 
 class UserCalendarUpdate(BaseModel):
@@ -86,6 +87,7 @@ class UserCalendarUpdate(BaseModel):
 class UserDayStatusOut(BaseModel):
     date: date
     status: DayStatus
+    note: str | None = None
 
 
 class UserCalendarOut(BaseModel):
@@ -97,6 +99,7 @@ class UserCalendarOut(BaseModel):
 class TeamRowOut(BaseModel):
     user: UserOut
     statuses: dict[date, DayStatus | None]
+    notes: dict[date, str | None]
     remote_remaining_start: int
     remote_remaining_end: int
 
