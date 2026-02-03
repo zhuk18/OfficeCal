@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from .database import Base, SessionLocal, engine
 from . import crud, models, schemas
+from . import seed as seed_module
 
 Base.metadata.create_all(bind=engine)
 
@@ -57,6 +58,14 @@ def require_admin(user: models.User = Depends(get_current_user)):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.post("/admin/seed", response_model=dict)
+def seed_data(
+    _: models.User = Depends(require_admin),
+):
+    seed_module.seed()
+    return {"status": "seeded"}
 
 
 @app.post("/departments", response_model=schemas.DepartmentOut)
