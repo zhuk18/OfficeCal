@@ -248,12 +248,17 @@ export default function TeamCalendarView() {
                   <th>Employee</th>
                   <th>Department</th>
                   <th>Remote left (start)</th>
-                  {calendar.month.days.map((day) => (
-                    <th key={day.id} className={day.is_weekend ? "weekend-header" : ""}>
-                      {new Date(day.date).getDate()}
-                      <div style={{ fontSize: 10 }}>{day.weekday_name}</div>
-                    </th>
-                  ))}
+                  {calendar.month.days.map((day) => {
+                    const today = new Date().toISOString().split('T')[0];
+                    const isToday = day.date === today;
+                    const isWeekend = day.is_weekend;
+                    return (
+                      <th key={day.id} className={isToday ? "today-header" : isWeekend ? "weekend-header" : ""}>
+                        {new Date(day.date).getDate()}
+                        <div style={{ fontSize: 10 }}>{day.weekday_name}</div>
+                      </th>
+                    );
+                  })}
                   <th>Remote left (end)</th>
                 </tr>
               </thead>
@@ -264,12 +269,14 @@ export default function TeamCalendarView() {
                     <td>{row.user.department?.name || "—"}</td>
                     <td>{row.remote_remaining_start}</td>
                     {calendar.month.days.map((day) => {
+                      const today = new Date().toISOString().split('T')[0];
                       const status = row.statuses[day.date] as DayStatus | undefined;
                       const isWeekend = day.is_weekend;
+                      const isToday = day.date === today;
                       return (
                         <td
                           key={day.id}
-                          className={`${status ? statusClass[status] : "status-empty"} ${isWeekend ? "weekend-cell" : ""}`}
+                          className={`${status ? statusClass[status] : "status-empty"} ${isToday ? "today-cell" : isWeekend ? "weekend-cell" : ""}`}
                         >
                           {status ? statusLabels[status][0] : ""}
                         </td>

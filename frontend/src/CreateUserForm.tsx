@@ -21,6 +21,9 @@ export default function CreateUserForm({ onUserCreated, departments }: Props) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("employee");
   const [department, setDepartment] = useState("");
+  const [annualRemote, setAnnualRemote] = useState(100);
+  const [startDate, setStartDate] = useState("");
+  const [additionalVacation, setAdditionalVacation] = useState(0);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -35,7 +38,9 @@ export default function CreateUserForm({ onUserCreated, departments }: Props) {
         display_name: name,
         email,
         role,
-        annual_remote_limit: 100,
+        annual_remote_limit: annualRemote,
+        start_date: startDate || null,
+        additional_vacation_days: additionalVacation,
         department_id: department ? Number(department) : null,
       };
 
@@ -55,6 +60,9 @@ export default function CreateUserForm({ onUserCreated, departments }: Props) {
       setEmail("");
       setRole("employee");
       setDepartment("");
+      setAnnualRemote(100);
+      setStartDate("");
+      setAdditionalVacation(0);
       
       setTimeout(() => {
         setIsOpen(false);
@@ -134,6 +142,35 @@ export default function CreateUserForm({ onUserCreated, departments }: Props) {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="form-group">
+            <label>Annual Remote Days</label>
+            <input
+              type="number"
+              min="0"
+              value={annualRemote}
+              onChange={(e) => setAnnualRemote(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Start Date (Contract)</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Additional Vacation Days</label>
+            <input
+              type="number"
+              min="0"
+              value={additionalVacation}
+              onChange={(e) => setAdditionalVacation(Number(e.target.value))}
+            />
           </div>
 
           <div className="form-actions">

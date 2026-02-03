@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { EmployeeCard } from "./EmployeeCard";
 
 type DayStatus =
   | "office"
@@ -23,6 +24,8 @@ type UserCalendar = {
     email: string;
     role: string;
     annual_remote_limit: number;
+    start_date: string | null;
+    additional_vacation_days: number;
     department_id?: number | null;
     department?: { id: number; name: string } | null;
   };
@@ -128,11 +131,10 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
     // Skip weekends
     if (isWeekend) return;
 
-    // Calculate position for context menu - align to the status column (rightmost)
-    const row = event.currentTarget as HTMLElement;
-    const statusCell = row.querySelector('td:last-child') as HTMLElement;
-    const rect = statusCell ? statusCell.getBoundingClientRect() : row.getBoundingClientRect();
-    
+    // Calculate position for context menu - align to clicked cell
+    const cell = event.currentTarget as HTMLElement;
+    const rect = cell.getBoundingClientRect();
+
     setPickerPosition({
       top: rect.bottom + window.scrollY + 4,
       left: rect.left + window.scrollX,
@@ -350,9 +352,6 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
               </option>
             ))}
           </select>
-          <div className="remote-counter-compact">
-            <span>Remote: {remoteCounter?.used ?? "—"} / {remoteCounter?.remaining ?? "—"} left</span>
-          </div>
           <button
             className="copy-prev-btn"
             onClick={handleCopyPreviousMonth}
@@ -379,6 +378,17 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
         </div>
       </section>
 
+      {calendar && (
+        <EmployeeCard
+          userId={userId}
+          displayName={calendar.user.display_name}
+          startDate={calendar.user.start_date as string | null}
+          additionalVacationDays={calendar.user.additional_vacation_days}
+          currentYear={year}
+          currentMonth={month}
+        />
+      )}
+
       <section className="card">
         {error && <div className="error-message">{error}</div>}
         {!calendar ? (
@@ -393,32 +403,40 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
               <table className="table editable">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Day</th>
-                    <th>Status</th>
+                    <th>Employee</th>
+                    {calendar.month.days.map((day) => {
+                      const today = new Date().toISOString().split('T')[0];
+                      const isToday = day.date === today;
+                      const isWeekend = day.is_weekend;
+                      return (
+                        <th key={day.id} className={isToday ? "today-header" : isWeekend ? "weekend-header" : ""}>
+                          {new Date(day.date).getDate()}
+                          <div style={{ fontSize: 10 }}>{day.weekday_name}</div>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
-                  {calendar.month.days.map((day) => {
-                    const status = statuses[day.date];
-                    const isSelected = selectedDays.has(day.date);
-                    const isWeekend = day.is_weekend;
-                    return (
-                      <tr
-                        key={day.id}
-                        className={`day-row ${isSelected ? "selected" : ""} ${isWeekend ? "weekend" : ""}`}
-                        onClick={(e) => handleDayClick(day.date, isWeekend, e)}
-                      >
-                        <td>
-                          <strong>{day.date}</strong>
+                  <tr>
+                    <td>{calendar.user.display_name}</td>
+                    {calendar.month.days.map((day) => {
+                      const today = new Date().toISOString().split('T')[0];
+                      const status = statuses[day.date];
+                      const isSelected = selectedDays.has(day.date);
+                      const isWeekend = day.is_weekend;
+                      const isToday = day.date === today;
+                      return (
+                        <td
+                          key={day.id}
+                          className={`${status ? statusClass[status] : "status-empty"} ${isToday ? "today-cell" : isWeekend ? "weekend-cell" : ""} ${isSelected ? "selected" : ""}`}
+                          onClick={(e) => handleDayClick(day.date, isWeekend, e)}
+                        >
+                          {status ? statusLabels[status][0] : ""}
                         </td>
-                        <td>{day.weekday_name}</td>
-                        <td className={status ? statusClass[status] : "status-empty"}>
-                          {status ? statusLabels[status] : "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                      );
+                    })}
+                  </tr>
                 </tbody>
               </table>
 

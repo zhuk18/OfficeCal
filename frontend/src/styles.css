@@ -185,6 +185,7 @@ body {
   width: 100%;
   border-collapse: collapse;
   overflow: auto;
+  text-align: left;
 }
 
 .table th,
@@ -214,7 +215,8 @@ body {
 }
 
 .table .weekend-header {
-  background: #f5f3ff;
+  background: #f3e8ff;
+  border: 1px solid #d8b4fe;
 }
 
 .table .weekend-cell {
@@ -222,7 +224,20 @@ body {
 }
 
 .table .weekend-cell.status-empty {
-  background: #f5f3ff;
+  background: #faf5ff;
+}
+
+.table .today-header {
+  border: 2px solid #0ea5e9;
+  font-weight: 600;
+}
+
+.table .today-cell {
+  border: 2px solid #0ea5e9;
+}
+
+.table .today-cell.status-empty {
+  background: #e0f2fe;
 }
 
 .table.editable tbody tr {
@@ -288,7 +303,7 @@ body {
 
 .calendar-container {
   max-width: 600px;
-  margin: 0 auto;
+  margin: 0;
   position: relative;
 }
 
@@ -414,7 +429,7 @@ body {
   gap: 12px;
   margin-top: 16px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .save-btn {
@@ -591,5 +606,48 @@ body {
 .btn-secondary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.employee-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  margin-bottom: 20px;
+}
+
+.employee-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.employee-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.employee-card-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.employee-card-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.employee-card-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
 }
 

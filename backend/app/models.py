@@ -40,6 +40,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(200), unique=True, index=True)
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.employee)
     annual_remote_limit: Mapped[int] = mapped_column(Integer, default=100)
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    additional_vacation_days: Mapped[int] = mapped_column(Integer, default=0)
     department_id: Mapped[int | None] = mapped_column(ForeignKey("departments.id"))
 
     department: Mapped[Department | None] = relationship("Department", back_populates="users")

@@ -25,6 +25,8 @@ class UserBase(BaseModel):
     email: str
     role: Role = Role.employee
     annual_remote_limit: int = 100
+    start_date: date | None = None
+    additional_vacation_days: int = 0
     department_id: int | None = None
 
 
@@ -98,6 +100,13 @@ class RemoteCounterOut(BaseModel):
     year: int
     used: int
     limit: int
+    remaining: int
+
+
+class VacationCounterOut(BaseModel):
+    year: int
+    allowed: int
+    used: int
     remaining: int
 
 

@@ -86,6 +86,24 @@ def count_remote_days(db: Session, user_id: int, year: int) -> int:
     return len(result)
 
 
+def count_vacation_days(db: Session, user_id: int, year: int, month: int | None = None) -> int:
+    query = (
+        select(models.UserDayStatus)
+        .join(models.CalendarDay)
+        .join(models.CalendarMonth)
+        .where(models.UserDayStatus.user_id == user_id)
+        .where(models.CalendarMonth.year == year)
+        .where(models.UserDayStatus.status == models.DayStatus.vacation)
+    )
+    
+    # If month is specified, only count days in that month
+    if month is not None:
+        query = query.where(models.CalendarMonth.month == month)
+    
+    result = db.scalars(query).all()
+    return len(result)
+
+
 def count_remote_days_until(db: Session, user_id: int, year: int, end_date: date) -> int:
     year_start = date(year, 1, 1)
     if end_date < year_start:

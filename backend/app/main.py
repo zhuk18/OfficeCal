@@ -243,3 +243,34 @@ def get_remote_counter(
         limit=current_user.annual_remote_limit,
         remaining=remaining,
     )
+
+
+@app.get("/me/vacation-counter", response_model=schemas.VacationCounterOut)
+def get_vacation_counter(
+    year: int,
+    month: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    from . import utils
+    
+    # Accrued days at the END of the previous month
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    
+    accrued = utils.calculate_vacation_days_accrued(
+        current_user.start_date, 
+        prev_year, 
+        prev_month
+    )
+    
+    # Used days in the current month
+    used = crud.count_vacation_days(db, current_user.id, year, month)
+    remaining = max(accrued - used, 0)
+    
+    return schemas.VacationCounterOut(
+        year=year,
+        allowed=accrued,
+        used=used,
+        remaining=remaining,
+    )

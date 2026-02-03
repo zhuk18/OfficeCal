@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+"""Migration script to add new columns to existing database."""
+
+import os
+from sqlalchemy import text, inspect
+from backend.app.database import engine, Base, SessionLocal
+from backend.app import models
+
+def migrate_database():
+    """Add missing columns to existing tables."""
+    
+    with engine.connect() as connection:
+        inspector = inspect(engine)
+        
+        # Check if User table exists
+        if 'users' in inspector.get_table_names():
+            user_columns = [col['name'] for col in inspector.get_columns('users')]
+            
+            # Add start_date column if missing
+            if 'start_date' not in user_columns:
+                print("Adding start_date column to users table...")
+                connection.execute(text("ALTER TABLE users ADD COLUMN start_date DATE NULL"))
+                connection.commit()
+                print("✓ Added start_date column")
+            
+            # Add additional_vacation_days column if missing
+            if 'additional_vacation_days' not in user_columns:
+                print("Adding additional_vacation_days column to users table...")
+                connection.execute(text("ALTER TABLE users ADD COLUMN additional_vacation_days INTEGER DEFAULT 0"))
+                connection.commit()
+                print("✓ Added additional_vacation_days column")
+        
+        # Create all tables (will skip existing ones)
+        Base.metadata.create_all(bind=engine)
+        print("✓ Database schema is up to date")
+
+if __name__ == "__main__":
+    migrate_database()
+    print("\nMigration complete!")
