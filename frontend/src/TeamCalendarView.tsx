@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import CreateUserForm from "./CreateUserForm";
 
 type DayStatus =
   | "office"
@@ -223,10 +222,6 @@ export default function TeamCalendarView() {
               </option>
             ))}
           </select>
-          <CreateUserForm
-            departments={allDepartments}
-            onUserCreated={() => setRefreshKey((k) => k + 1)}
-          />
         </div>
         <div className="legend">
           {Object.entries(statusLabels).map(([key, label]) => (
