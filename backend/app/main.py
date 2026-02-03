@@ -62,8 +62,19 @@ def health():
 
 @app.post("/admin/seed", response_model=dict)
 def seed_data(
-    _: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    x_user_id: int | None = Header(default=None, alias="X-User-Id"),
 ):
+    user_count = db.query(models.User).count()
+    if user_count > 0:
+        if x_user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing X-User-Id")
+        user = db.get(models.User, x_user_id)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unknown user")
+        if user.role != models.Role.admin:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+
     seed_module.seed()
     return {"status": "seeded"}
 
