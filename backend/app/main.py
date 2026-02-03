@@ -84,6 +84,28 @@ def list_users(db: Session = Depends(get_db)):
     return db.query(models.User).order_by(models.User.display_name).all()
 
 
+@app.put("/users/{user_id}", response_model=schemas.UserOut)
+def update_user(
+    user_id: int,
+    payload: schemas.UserUpdate,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
+    user = db.get(models.User, user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    # Update only provided fields
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(user, key, value)
+    
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 @app.get("/months/{year}/{month}", response_model=schemas.CalendarMonthOut)
 def get_month(year: int, month: int, db: Session = Depends(get_db)):
     return crud.get_or_create_month(db, year, month)
@@ -248,24 +270,21 @@ def get_remote_counter(
 @app.get("/me/vacation-counter", response_model=schemas.VacationCounterOut)
 def get_vacation_counter(
     year: int,
-    month: int,
+    month: int | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
     from . import utils
     
-    # Accrued days at the END of the previous month
-    prev_month = month - 1 if month > 1 else 12
-    prev_year = year if month > 1 else year - 1
-    
+    # Accrued days at the END of the year
     accrued = utils.calculate_vacation_days_accrued(
         current_user.start_date, 
-        prev_year, 
-        prev_month
+        year, 
+        12
     )
     
-    # Used days in the current month
-    used = crud.count_vacation_days(db, current_user.id, year, month)
+    # Used days in the entire year
+    used = crud.count_vacation_days(db, current_user.id, year)
     remaining = max(accrued - used, 0)
     
     return schemas.VacationCounterOut(

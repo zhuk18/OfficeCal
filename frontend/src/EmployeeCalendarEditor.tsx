@@ -79,6 +79,7 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [calendar, setCalendar] = useState<UserCalendar | null>(null);
   const [remoteCounter, setRemoteCounter] = useState<RemoteCounter | null>(null);
+  const [vacationCounter, setVacationCounter] = useState<VacationCounter | null>(null);
   const [statuses, setStatuses] = useState<Record<string, DayStatus>>({});
   const [selectedDays, setSelectedDays] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
@@ -123,6 +124,14 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
       .then((res) => res.json())
       .then((data: RemoteCounter) => setRemoteCounter(data))
       .catch(() => setRemoteCounter(null));
+
+    fetch(`${API_URL}/me/vacation-counter?year=${year}`, {
+      headers: { "X-User-Id": String(userId) },
+      signal: controller.signal,
+    })
+      .then((res) => res.json())
+      .then((data: VacationCounter) => setVacationCounter(data))
+      .catch(() => setVacationCounter(null));
 
     return () => controller.abort();
   }, [year, month, userId]);
@@ -208,6 +217,13 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
     setSaved(false);
   };
 
+  type VacationCounter = {
+    year: number;
+    allowed: number;
+    used: number;
+    remaining: number;
+  };
+
   const handleSave = async () => {
     if (!calendar) return;
 
@@ -240,6 +256,14 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
         })
           .then((res) => res.json())
           .then((data: RemoteCounter) => setRemoteCounter(data))
+          .catch(() => {});
+
+        // Recalculate vacation counter
+        fetch(`${API_URL}/me/vacation-counter?year=${year}`, {
+          headers: { "X-User-Id": String(userId) },
+        })
+          .then((res) => res.json())
+          .then((data: VacationCounter) => setVacationCounter(data))
           .catch(() => {});
       }
     } catch (error) {
@@ -386,6 +410,8 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
           additionalVacationDays={calendar.user.additional_vacation_days}
           currentYear={year}
           currentMonth={month}
+          vacationCounter={vacationCounter}
+          remoteCounter={remoteCounter}
         />
       )}
 

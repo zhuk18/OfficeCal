@@ -34,6 +34,16 @@ class UserCreate(UserBase):
     pass
 
 
+class UserUpdate(BaseModel):
+    display_name: str | None = None
+    email: str | None = None
+    role: Role | None = None
+    annual_remote_limit: int | None = None
+    start_date: date | None = None
+    additional_vacation_days: int | None = None
+    department_id: int | None = None
+
+
 class UserOut(UserBase):
     id: int
     department: DepartmentOut | None = None

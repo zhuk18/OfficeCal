@@ -7,25 +7,41 @@ interface Department {
   name: string;
 }
 
+interface User {
+  id: number;
+  display_name: string;
+  email: string;
+  role: Role;
+  annual_remote_limit: number;
+  start_date: string | null;
+  additional_vacation_days: number;
+  department_id: number | null;
+  department: Department | null;
+}
+
 interface Props {
   onUserCreated?: () => void;
   departments: Department[];
+  editingUser?: User | null;
+  onEditComplete?: () => void;
 }
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
-export default function CreateUserForm({ onUserCreated, departments }: Props) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function CreateUserForm({ onUserCreated, departments, editingUser, onEditComplete }: Props) {
+  const [isOpen, setIsOpen] = useState(!!editingUser);
   const [loading, setLoading] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<Role>("employee");
-  const [department, setDepartment] = useState("");
-  const [annualRemote, setAnnualRemote] = useState(100);
-  const [startDate, setStartDate] = useState("");
-  const [additionalVacation, setAdditionalVacation] = useState(0);
+  const [name, setName] = useState(editingUser?.display_name ?? "");
+  const [email, setEmail] = useState(editingUser?.email ?? "");
+  const [role, setRole] = useState<Role>(editingUser?.role ?? "employee");
+  const [department, setDepartment] = useState(editingUser?.department_id?.toString() ?? "");
+  const [annualRemote, setAnnualRemote] = useState(editingUser?.annual_remote_limit ?? 100);
+  const [startDate, setStartDate] = useState(editingUser?.start_date ?? "");
+  const [additionalVacation, setAdditionalVacation] = useState(editingUser?.additional_vacation_days ?? 0);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const isEditing = !!editingUser;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,18 +60,26 @@ export default function CreateUserForm({ onUserCreated, departments }: Props) {
         department_id: department ? Number(department) : null,
       };
 
-      const res = await fetch(`${API_URL}/users`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const url = isEditing ? `${API_URL}/users/${editingUser.id}` : `${API_URL}/users`;
+      const method = isEditing ? "PUT" : "POST";
+      const headerValue = isEditing ? "X-User-Id" : "Content-Type";
+      const headerKey = isEditing ? editingUser.id.toString() : "application/json";
+
+      const res = await fetch(url, {
+        method,
+        headers: { 
+          "Content-Type": "application/json",
+          "X-User-Id": String(editingUser?.id || "")
+        },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.detail || "Failed to create user");
+        throw new Error(data.detail || `Failed to ${isEditing ? "update" : "create"} user`);
       }
 
-      setSuccess(`User "${name}" created successfully!`);
+      setSuccess(`User "${name}" ${isEditing ? "updated" : "created"} successfully!`);
       setName("");
       setEmail("");
       setRole("employee");
@@ -68,6 +92,7 @@ export default function CreateUserForm({ onUserCreated, departments }: Props) {
         setIsOpen(false);
         setSuccess("");
         onUserCreated?.();
+        onEditComplete?.();
       }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -76,7 +101,7 @@ export default function CreateUserForm({ onUserCreated, departments }: Props) {
     }
   };
 
-  if (!isOpen) {
+  if (!isOpen && !isEditing) {
     return (
       <button className="add-user-btn" onClick={() => setIsOpen(true)}>
         + Add User
@@ -85,11 +110,16 @@ export default function CreateUserForm({ onUserCreated, departments }: Props) {
   }
 
   return (
-    <div className="modal-overlay" onClick={() => setIsOpen(false)}>
+    <div className="modal-overlay" onClick={() => !isEditing && setIsOpen(false)}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Create New User</h3>
-          <button className="close-btn" onClick={() => setIsOpen(false)}>
+          <h3>{isEditing ? "Edit User" : "Create New User"}</h3>
+          <button className="close-btn" onClick={() => {
+            setIsOpen(false);
+            if (isEditing) {
+              onEditComplete?.();
+            }
+          }}>
             ✕
           </button>
         </div>
@@ -187,7 +217,7 @@ export default function CreateUserForm({ onUserCreated, departments }: Props) {
               className="btn-primary"
               disabled={loading}
             >
-              {loading ? "Creating..." : "Create User"}
+              {loading ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update User" : "Create User")}
             </button>
           </div>
         </form>
