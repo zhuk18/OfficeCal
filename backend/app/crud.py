@@ -104,6 +104,19 @@ def count_vacation_days(db: Session, user_id: int, year: int, month: int | None 
     return len(result)
 
 
+def get_vacation_dates(db: Session, user_id: int, year: int) -> list[date]:
+    result = db.scalars(
+        select(models.CalendarDay.date)
+        .join(models.UserDayStatus, models.UserDayStatus.day_id == models.CalendarDay.id)
+        .join(models.CalendarMonth, models.CalendarDay.month_id == models.CalendarMonth.id)
+        .where(models.UserDayStatus.user_id == user_id)
+        .where(models.CalendarMonth.year == year)
+        .where(models.UserDayStatus.status == models.DayStatus.vacation)
+        .order_by(models.CalendarDay.date)
+    ).all()
+    return list(result)
+
+
 def count_remote_days_until(db: Session, user_id: int, year: int, end_date: date) -> int:
     year_start = date(year, 1, 1)
     if end_date < year_start:

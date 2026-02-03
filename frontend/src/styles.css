@@ -232,6 +232,11 @@ body {
   font-weight: 600;
 }
 
+.table .workday-override-header {
+  background: #ecfccb;
+  border: 1px solid #a3e635;
+}
+
 .table .today-cell {
   border: 2px solid #0ea5e9;
 }
@@ -251,6 +256,58 @@ body {
 
 .table.editable tbody tr.weekend {
   background: #f5f3ff;
+}
+
+.vacation-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: default;
+}
+
+.vacation-tooltip-content {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  transform: none;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  z-index: 20;
+  min-width: 220px;
+  max-width: 320px;
+  max-height: 220px;
+  overflow-y: auto;
+  text-align: left;
+  white-space: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vacation-tooltip-content::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 16px;
+  transform: none;
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #0f172a transparent;
+}
+
+.vacation-tooltip:hover .vacation-tooltip-content {
+  opacity: 1;
+  visibility: visible;
 }
 
 .table.editable tbody tr.weekend:hover {

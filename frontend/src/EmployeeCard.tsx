@@ -4,7 +4,7 @@ type EmployeeCardProps = {
   userId: number;
   displayName: string;
   startDate: string | null;
-  additionalVacationDays: number;
+  vacationDays: Array<{ vacation_type: string; days_per_year: number }>;
   currentYear: number;
   currentMonth: number;
   vacationCounter?: VacationCounter | null;
@@ -29,7 +29,7 @@ export function EmployeeCard({
   userId,
   displayName,
   startDate,
-  additionalVacationDays,
+  vacationDays,
   currentYear,
   currentMonth,
   vacationCounter: externalVacationCounter,
@@ -108,15 +108,26 @@ export function EmployeeCard({
         </div>
 
         <div className="employee-card-item">
-          <div className="employee-card-label">Vacation Days {currentYear} (Used/allowed)</div>
+          <div className="employee-card-label">Vacation Days {currentYear} (Used/total)</div>
           <div className="employee-card-value">
             {loading ? "—" : `${vacationCounter?.used ?? 0} / ${vacationCounter?.allowed ?? 0}`}
           </div>
         </div>
 
         <div className="employee-card-item">
-          <div className="employee-card-label">Additional Vacation Days</div>
-          <div className="employee-card-value">{additionalVacationDays}</div>
+          <div className="employee-card-label">Vacation Days Remaining</div>
+          <div className="employee-card-value">
+            {loading ? "—" : `${vacationCounter?.remaining ?? 0}`}
+          </div>
+        </div>
+
+        <div className="employee-card-item">
+          <div className="employee-card-label">Extra vacation by type</div>
+          <div className="employee-card-value">
+            {vacationDays.length > 0
+              ? vacationDays.map((v) => `${v.vacation_type}: ${v.days_per_year}`).join(", ")
+              : "—"}
+          </div>
         </div>
       </div>
     </section>

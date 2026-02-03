@@ -27,11 +27,12 @@ class UserBase(BaseModel):
     annual_remote_limit: int = 100
     start_date: date | None = None
     additional_vacation_days: int = 0
+    carryover_vacation_days: int = 0
     department_id: int | None = None
 
 
 class UserCreate(UserBase):
-    pass
+    vacation_days: dict[str, int] | None = None
 
 
 class UserUpdate(BaseModel):
@@ -41,12 +42,23 @@ class UserUpdate(BaseModel):
     annual_remote_limit: int | None = None
     start_date: date | None = None
     additional_vacation_days: int | None = None
+    carryover_vacation_days: int | None = None
     department_id: int | None = None
+    vacation_days: dict[str, int] | None = None
 
 
 class UserOut(UserBase):
     id: int
     department: DepartmentOut | None = None
+    vacation_days: list[UserVacationDaysOut] = []
+
+    class Config:
+        from_attributes = True
+
+
+class UserVacationDaysOut(BaseModel):
+    vacation_type: str
+    days_per_year: int
 
     class Config:
         from_attributes = True
@@ -58,6 +70,7 @@ class CalendarDayOut(BaseModel):
     weekday_name: str
     is_weekend: bool
     is_holiday: bool
+    is_workday_override: bool
 
     class Config:
         from_attributes = True

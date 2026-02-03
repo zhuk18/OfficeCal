@@ -44,7 +44,13 @@ def get_current_user(
 
 def require_admin(user: models.User = Depends(get_current_user)):
     if user.role != models.Role.admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+        db = SessionLocal()
+        try:
+            user_count = db.query(models.User).count()
+        finally:
+            db.close()
+        if user_count > 1:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
     return user
 
 
@@ -73,11 +79,32 @@ def list_departments(db: Session = Depends(get_db)):
 
 @app.post("/users", response_model=schemas.UserOut)
 def create_user(payload: schemas.UserCreate, db: Session = Depends(get_db)):
-    user = models.User(**payload.model_dump())
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
+    try:
+        payload_dict = payload.model_dump()
+        vacation_days = payload_dict.pop("vacation_days", None)
+        
+        user = models.User(**payload_dict)
+        db.add(user)
+        db.flush()
+        
+        # Add vacation day types if provided
+        if vacation_days:
+            for vacation_type, days_per_year in vacation_days.items():
+                vacation_entry = models.UserVacationDays(
+                    user_id=user.id,
+                    vacation_type=vacation_type,
+                    days_per_year=days_per_year,
+                )
+                db.add(vacation_entry)
+        
+        db.commit()
+        db.refresh(user)
+        db.refresh(user, ["vacation_days"])
+        return user
+    except Exception as e:
+        db.rollback()
+        print(f"Error creating user: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @app.get("/users", response_model=list[schemas.UserOut])
@@ -92,19 +119,71 @@ def update_user(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_admin),
 ):
+    try:
+        user = db.get(models.User, user_id)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+        # Update only provided fields
+        update_data = payload.model_dump(exclude_unset=True)
+        vacation_days = update_data.pop("vacation_days", None)
+        
+        for key, value in update_data.items():
+            setattr(user, key, value)
+        
+        # Update vacation day types if provided
+        if vacation_days is not None:
+            # Delete existing vacation day types
+            existing = db.query(models.UserVacationDays).filter(
+                models.UserVacationDays.user_id == user_id
+            ).all()
+            for entry in existing:
+                db.delete(entry)
+            db.flush()  # Flush deletes before adding new entries
+            
+            # Add new vacation day types
+            for vacation_type, days_per_year in vacation_days.items():
+                vacation_entry = models.UserVacationDays(
+                    user_id=user_id,
+                    vacation_type=vacation_type,
+                    days_per_year=days_per_year,
+                )
+                db.add(vacation_entry)
+        
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        db.refresh(user, ["vacation_days"])
+        return user
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating user {user_id}: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@app.delete("/users/{user_id}", response_model=dict)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
     user = db.get(models.User, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    
-    # Update only provided fields
-    update_data = payload.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(user, key, value)
-    
-    db.add(user)
+
+    db.query(models.UserDayStatus).filter(models.UserDayStatus.user_id == user_id).delete(
+        synchronize_session=False
+    )
+    db.query(models.AnnualRemoteCounter).filter(
+        models.AnnualRemoteCounter.user_id == user_id
+    ).delete(synchronize_session=False)
+    db.query(models.UserVacationDays).filter(
+        models.UserVacationDays.user_id == user_id
+    ).delete(synchronize_session=False)
+
+    db.delete(user)
     db.commit()
-    db.refresh(user)
-    return user
+    return {"status": "deleted"}
 
 
 @app.get("/months/{year}/{month}", response_model=schemas.CalendarMonthOut)
@@ -219,8 +298,8 @@ def get_team_calendar(year: int, month: int, db: Session = Depends(get_db)):
         used_before_month = crud.count_remote_days_until(db, user.id, year, start_end_date)
         used_through_month = crud.count_remote_days_until(db, user.id, year, month_end)
         limit = user.annual_remote_limit or 100
-        remaining_start = max(limit - used_before_month, 0)
-        remaining_end = max(limit - used_through_month, 0)
+        remaining_start = limit - used_before_month
+        remaining_end = limit - used_through_month
         rows.append(
             schemas.TeamRowOut(
                 user=user,
@@ -232,6 +311,50 @@ def get_team_calendar(year: int, month: int, db: Session = Depends(get_db)):
         )
 
     return schemas.TeamCalendarOut(month=month_obj, rows=rows)
+
+
+@app.put("/months/{year}/{month}/days/{day_date}/workday", response_model=schemas.CalendarDayOut)
+def set_workday_override(
+    year: int,
+    month: int,
+    day_date: date,
+    payload: dict,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
+    month_obj = crud.get_or_create_month(db, year, month)
+    day = next((d for d in month_obj.days if d.date == day_date), None)
+    if not day:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Day not found")
+
+    is_workday_override = bool(payload.get("is_workday_override"))
+    day.is_workday_override = is_workday_override
+    db.add(day)
+    db.commit()
+    db.refresh(day)
+    return day
+
+
+@app.put("/months/{year}/{month}/days/{day_date}/holiday", response_model=schemas.CalendarDayOut)
+def set_holiday(
+    year: int,
+    month: int,
+    day_date: date,
+    payload: dict,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
+    month_obj = crud.get_or_create_month(db, year, month)
+    day = next((d for d in month_obj.days if d.date == day_date), None)
+    if not day:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Day not found")
+
+    is_holiday = bool(payload.get("is_holiday"))
+    day.is_holiday = is_holiday
+    db.add(day)
+    db.commit()
+    db.refresh(day)
+    return day
 
 
 @app.put("/users/{user_id}/calendar/{year}/{month}/{day_date}/note", response_model=dict)
@@ -255,23 +378,43 @@ def update_day_note(
         .where(models.UserDayStatus.user_id == user_id)
         .where(models.UserDayStatus.day_id == day.id)
     )
+
+    status_value = payload.get("status")
+    if status_value == "clear":
+        if user_day_status:
+            db.delete(user_day_status)
+            db.commit()
+        return {"success": True, "note": None, "status": None}
     
     if not user_day_status:
-        # If no status exists, create one with office status
+        # If no status exists, create one
+        if status_value:
+            try:
+                status_enum = models.DayStatus(status_value)
+            except ValueError:
+                status_enum = models.DayStatus.office
+        else:
+            status_enum = models.DayStatus.office
+
         user_day_status = models.UserDayStatus(
             user_id=user_id,
             day_id=day.id,
-            status=models.DayStatus.office,
+            status=status_enum,
             note=payload.get("note")
         )
         db.add(user_day_status)
     else:
+        if status_value:
+            try:
+                user_day_status.status = models.DayStatus(status_value)
+            except ValueError:
+                pass
         user_day_status.note = payload.get("note")
         db.add(user_day_status)
     
     db.commit()
     db.refresh(user_day_status)
-    return {"success": True, "note": user_day_status.note}
+    return {"success": True, "note": user_day_status.note, "status": user_day_status.status.value}
 
 
 @app.get("/who-is-in-office", response_model=schemas.WhoIsInOfficeOut)
@@ -301,7 +444,7 @@ def get_remote_counter(
     current_user: models.User = Depends(get_current_user),
 ):
     used = crud.count_remote_days(db, current_user.id, year)
-    remaining = max(current_user.annual_remote_limit - used, 0)
+    remaining = current_user.annual_remote_limit - used
     return schemas.RemoteCounterOut(
         year=year,
         used=used,
@@ -319,12 +462,18 @@ def get_vacation_counter(
 ):
     from . import utils
     
-    # Accrued days at the END of the year
+    # Accrued days in the current year
     accrued = utils.calculate_vacation_days_accrued(
         current_user.start_date, 
         year, 
         12
     )
+    
+    # Add additional vacation days
+    accrued += current_user.additional_vacation_days
+    
+    # Add carryover days from previous year
+    accrued += current_user.carryover_vacation_days
     
     # Used days in the entire year
     used = crud.count_vacation_days(db, current_user.id, year)
@@ -336,3 +485,20 @@ def get_vacation_counter(
         used=used,
         remaining=remaining,
     )
+
+
+@app.get("/users/{user_id}/vacation-dates", response_model=list[date])
+def get_user_vacation_dates(
+    user_id: int,
+    year: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if current_user.role != models.Role.admin and current_user.id != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    user = db.get(models.User, user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return crud.get_vacation_dates(db, user_id, year)

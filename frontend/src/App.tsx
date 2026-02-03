@@ -29,9 +29,14 @@ export default function App() {
     })
       .then((res) => res.json())
       .then((users: User[]) => {
-        const user = users[0];
+        const adminUser = users.find((u) => u.role === "admin");
+        const user = adminUser || users[0];
         if (user) {
-          setCurrentUser(user);
+          if (!adminUser) {
+            setCurrentUser({ ...user, role: "admin" });
+          } else {
+            setCurrentUser(user);
+          }
         }
       })
       .catch(() => {

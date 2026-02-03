@@ -42,10 +42,12 @@ class User(Base):
     annual_remote_limit: Mapped[int] = mapped_column(Integer, default=100)
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     additional_vacation_days: Mapped[int] = mapped_column(Integer, default=0)
+    carryover_vacation_days: Mapped[int] = mapped_column(Integer, default=0)
     department_id: Mapped[int | None] = mapped_column(ForeignKey("departments.id"))
 
     department: Mapped[Department | None] = relationship("Department", back_populates="users")
     statuses: Mapped[list[UserDayStatus]] = relationship("UserDayStatus", back_populates="user")
+    vacation_days: Mapped[list[UserVacationDays]] = relationship("UserVacationDays", back_populates="user")
 
 
 class CalendarMonth(Base):
@@ -70,6 +72,7 @@ class CalendarDay(Base):
     weekday_name: Mapped[str] = mapped_column(String(12))
     is_weekend: Mapped[bool] = mapped_column(Boolean, default=False)
     is_holiday: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_workday_override: Mapped[bool] = mapped_column(Boolean, default=False)
 
     month: Mapped[CalendarMonth] = relationship("CalendarMonth", back_populates="days")
     statuses: Mapped[list[UserDayStatus]] = relationship("UserDayStatus", back_populates="day")
@@ -97,3 +100,14 @@ class AnnualRemoteCounter(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     year: Mapped[int] = mapped_column(Integer, index=True)
     used_days: Mapped[int] = mapped_column(Integer, default=0)
+
+class UserVacationDays(Base):
+    __tablename__ = "user_vacation_days"
+    __table_args__ = (UniqueConstraint("user_id", "vacation_type", name="uq_user_vacation_type"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    vacation_type: Mapped[str] = mapped_column(String(50))
+    days_per_year: Mapped[int] = mapped_column(Integer, default=0)
+
+    user: Mapped[User] = relationship("User", back_populates="vacation_days")

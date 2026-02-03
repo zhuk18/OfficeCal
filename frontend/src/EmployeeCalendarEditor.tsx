@@ -15,6 +15,7 @@ type CalendarDay = {
   weekday_name: string;
   is_weekend: boolean;
   is_holiday: boolean;
+  is_workday_override: boolean;
 };
 
 type UserCalendar = {
@@ -28,6 +29,7 @@ type UserCalendar = {
     additional_vacation_days: number;
     department_id?: number | null;
     department?: { id: number; name: string } | null;
+    vacation_days?: Array<{ vacation_type: string; days_per_year: number }>;
   };
   month: {
     id: number;
@@ -88,6 +90,9 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
   const [copying, setCopying] = useState(false);
   const [pickerPosition, setPickerPosition] = useState<{ top: number; left: number } | null>(null);
 
+  const isNonWorkingDay = (day: CalendarDay) =>
+    day.is_holiday || (day.is_weekend ? !day.is_workday_override : day.is_workday_override);
+
   useEffect(() => {
     if (!userId) return;
 
@@ -136,9 +141,9 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
     return () => controller.abort();
   }, [year, month, userId]);
 
-  const handleDayClick = (date: string, isWeekend: boolean, event: React.MouseEvent) => {
-    // Skip weekends
-    if (isWeekend) return;
+  const handleDayClick = (date: string, isNonWorking: boolean, event: React.MouseEvent) => {
+    // Skip non-working days
+    if (isNonWorking) return;
 
     // Calculate position for context menu - align to clicked cell
     const cell = event.currentTarget as HTMLElement;
@@ -150,7 +155,7 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
     });
 
     if (event.shiftKey && selectedDays.size > 0) {
-      // Shift+click to select range (skip weekends)
+      // Shift+click to select range (skip non-working days)
       const selectedArray = Array.from(selectedDays);
       const lastSelected = selectedArray[selectedArray.length - 1];
       const lastDate = new Date(lastSelected);
@@ -162,8 +167,8 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
       const newSelected = new Set(selectedDays);
       if (calendar) {
         calendar.month.days.forEach((day) => {
-          // Skip weekends in range selection
-          if (day.is_weekend) return;
+          // Skip non-working days in range selection
+          if (isNonWorkingDay(day)) return;
           
           const dayDate = new Date(day.date);
           if (dayDate >= start && dayDate <= end) {
@@ -314,8 +319,8 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
       // Apply to current month, matching by week position and weekday
       const newStatuses: Record<string, DayStatus> = { ...statuses };
       calendar.month.days.forEach((day) => {
-        // Skip weekends
-        if (day.is_weekend) return;
+        // Skip non-working days
+        if (isNonWorkingDay(day)) return;
         
         const { weekOfMonth, weekday } = getWeekInfo(day.date);
         const key = `${weekOfMonth}-${weekday}`;
@@ -407,7 +412,7 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
           userId={userId}
           displayName={calendar.user.display_name}
           startDate={calendar.user.start_date as string | null}
-          additionalVacationDays={calendar.user.additional_vacation_days}
+          vacationDays={calendar.user.vacation_days ?? []}
           currentYear={year}
           currentMonth={month}
           vacationCounter={vacationCounter}
@@ -433,9 +438,9 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
                     {calendar.month.days.map((day) => {
                       const today = new Date().toISOString().split('T')[0];
                       const isToday = day.date === today;
-                      const isWeekend = day.is_weekend;
+                      const isNonWorking = isNonWorkingDay(day);
                       return (
-                        <th key={day.id} className={isToday ? "today-header" : isWeekend ? "weekend-header" : ""}>
+                        <th key={day.id} className={isToday ? "today-header" : isNonWorking ? "weekend-header" : ""}>
                           {new Date(day.date).getDate()}
                           <div style={{ fontSize: 10 }}>{day.weekday_name}</div>
                         </th>
@@ -450,13 +455,13 @@ export default function EmployeeCalendarEditor({ userId, userName }: Props) {
                       const today = new Date().toISOString().split('T')[0];
                       const status = statuses[day.date];
                       const isSelected = selectedDays.has(day.date);
-                      const isWeekend = day.is_weekend;
+                      const isNonWorking = isNonWorkingDay(day);
                       const isToday = day.date === today;
                       return (
                         <td
                           key={day.id}
-                          className={`${status ? statusClass[status] : "status-empty"} ${isToday ? "today-cell" : isWeekend ? "weekend-cell" : ""} ${isSelected ? "selected" : ""}`}
-                          onClick={(e) => handleDayClick(day.date, isWeekend, e)}
+                          className={`${status ? statusClass[status] : "status-empty"} ${isToday ? "today-cell" : isNonWorking ? "weekend-cell" : ""} ${isSelected ? "selected" : ""}`}
+                          onClick={(e) => handleDayClick(day.date, isNonWorking, e)}
                         >
                           {status ? statusLabels[status][0] : ""}
                         </td>
