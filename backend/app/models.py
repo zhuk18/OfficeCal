@@ -109,16 +109,15 @@ class CalendarDay(Base):
     __tablename__ = "calendar_days"
     __table_args__ = (
         UniqueConstraint("month_id", "date", name="uq_month_date"),
-        Index("ix_calendar_days_date", "date"),
-        Index("ix_calendar_days_month_id", "month_id"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     month_id: Mapped[int] = mapped_column(
         ForeignKey("calendar_months.id", ondelete="CASCADE"),
+        index=True,
         nullable=False,
     )
-    date: Mapped[date] = mapped_column(Date, index=True, nullable=False)
+    date: Mapped[date] = mapped_column(Date, nullable=False)
     weekday_name: Mapped[str] = mapped_column(String(12), nullable=False)
     is_weekend: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_holiday: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
