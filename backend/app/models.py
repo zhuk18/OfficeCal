@@ -44,10 +44,6 @@ class Department(Base):
 class User(Base):
     """User/employee in the system."""
     __tablename__ = "users"
-    __table_args__ = (
-        Index("ix_users_email", "email"),
-        Index("ix_users_department_id", "department_id"),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     display_name: Mapped[str] = mapped_column(String(160), index=True, nullable=False)
@@ -57,7 +53,11 @@ class User(Base):
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     additional_vacation_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     carryover_vacation_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    department_id: Mapped[int | None] = mapped_column(ForeignKey("departments.id", ondelete="SET NULL"), nullable=True)
+    department_id: Mapped[int | None] = mapped_column(
+        ForeignKey("departments.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    )
 
     # Relationships
     department: Mapped[Department | None] = relationship("Department", back_populates="users", lazy="joined")
