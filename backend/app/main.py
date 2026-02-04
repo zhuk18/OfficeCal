@@ -24,24 +24,37 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize database on startup
-Base.metadata.create_all(bind=engine)
-
 # Environment configuration
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
+# Flag to track if tables have been initialized
+_tables_initialized = False
+
+
+def init_db():
+    """Initialize database tables on first use."""
+    global _tables_initialized
+    if not _tables_initialized:
+        try:
+            Base.metadata.create_all(bind=engine)
+            _tables_initialized = True
+            logger.info("Database tables initialized")
+        except Exception as e:
+            logger.warning(f"Failed to initialize database tables: {e}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan events for startup and shutdown."""
-    logger.info(f"Starting OfficeCal API in {ENVIRONMENT} mode")
+    logger.info(f"Starting OfficeCalendar API in {ENVIRONMENT} mode")
+    # Defer table creation to lazy initialization
     yield
-    logger.info("Shutting down OfficeCal API")
+    logger.info("Shutting down OfficeCalendar API")
 
 
 app = FastAPI(
-    title="OfficeCal API",
+    title="OfficeCalendar API",
     description="Office calendar management system",
     version="1.0.0",
     lifespan=lifespan,
@@ -88,6 +101,7 @@ def get_current_user(
     x_user_id: int | None = Header(default=None, alias="X-User-Id"),
 ) -> models.User:
     """Get current authenticated user from X-User-Id header."""
+    init_db()  # Ensure tables are initialized before using DB
     if x_user_id is None:
         logger.warning("Authentication failed: Missing X-User-Id header")
         raise HTTPException(
