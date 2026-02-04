@@ -62,7 +62,7 @@ def seed():
             department_id=hr_dept.id,
         )
         alice = models.User(
-            display_name="Alex"
+            display_name="Alex",
             email="alex@example.com",
             role=models.Role.employee,
             annual_remote_limit=100,
