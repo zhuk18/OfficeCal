@@ -83,7 +83,6 @@ class CalendarMonth(Base):
     __tablename__ = "calendar_months"
     __table_args__ = (
         UniqueConstraint("year", "month", name="uq_year_month"),
-        Index("ix_calendar_months_year_month", "year", "month"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -171,13 +170,12 @@ class AnnualRemoteCounter(Base):
     __tablename__ = "annual_remote_counters"
     __table_args__ = (
         UniqueConstraint("user_id", "year", name="uq_user_year"),
-        Index("ix_annual_remote_counters_user_id", "user_id"),
-        Index("ix_annual_remote_counters_year", "year"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
         nullable=False,
     )
     year: Mapped[int] = mapped_column(Integer, index=True, nullable=False)
