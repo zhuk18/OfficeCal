@@ -55,22 +55,22 @@ def seed():
         dev_dept = next((d for d in dept_objs if d.name == "Development"), dept_objs[0])
 
         admin = models.User(
-            display_name="Admin User",
+            display_name="Admin HR",
             email="admin@example.com",
             role=models.Role.admin,
             annual_remote_limit=100,
             department_id=hr_dept.id,
         )
         alice = models.User(
-            display_name="Alice Employee",
-            email="alice@example.com",
+            display_name="Alex"
+            email="alex@example.com",
             role=models.Role.employee,
             annual_remote_limit=100,
             department_id=dev_dept.id,
         )
         bob = models.User(
-            display_name="Bob Manager",
-            email="bob@example.com",
+            display_name="Sergey",
+            email="sergey@example.com",
             role=models.Role.manager,
             annual_remote_limit=100,
             department_id=dev_dept.id,

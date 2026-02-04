@@ -107,15 +107,12 @@ export default function TeamCalendarView() {
       .catch(() => setAllDepartments([]));
 
     // Fetch current user
-    fetch(`${API_URL}/users`, {
-      headers: { "X-User-Id": "1" },
-      signal: controller.signal,
-    })
+    fetch(`${API_URL}/users`, { signal: controller.signal })
       .then((res) => res.json())
       .then((users: User[]) => {
-        if (users.length > 0) {
-          setCurrentUser(users[0]);
-        }
+        const adminUser = users.find((u) => u.role === "admin");
+        const user = adminUser || users[0];
+        if (user) setCurrentUser(user);
       })
       .catch(() => {});
 
@@ -123,6 +120,7 @@ export default function TeamCalendarView() {
   }, [year, month, refreshKey]);
 
   const handleSaveNote = async (userId: number, date: string) => {
+    const adminId = currentUser?.id ?? 1;
     try {
       const res = await fetch(
         `${API_URL}/users/${userId}/calendar/${year}/${month}/${date}/note`,
@@ -130,7 +128,7 @@ export default function TeamCalendarView() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "X-User-Id": "1",
+            "X-User-Id": String(adminId),
           },
             body: JSON.stringify({ note: noteText, status: selectedStatus }),
         }
@@ -147,6 +145,7 @@ export default function TeamCalendarView() {
   };
 
   const handleClearStatus = async (userId: number, date: string) => {
+    const adminId = currentUser?.id ?? 1;
     try {
       const res = await fetch(
         `${API_URL}/users/${userId}/calendar/${year}/${month}/${date}/note`,
@@ -154,7 +153,7 @@ export default function TeamCalendarView() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "X-User-Id": "1",
+            "X-User-Id": String(adminId),
           },
           body: JSON.stringify({ status: "clear", note: "" }),
         }
@@ -171,6 +170,7 @@ export default function TeamCalendarView() {
   };
 
   const handleToggleWorkdayOverride = async (date: string, isWorkdayOverride: boolean) => {
+    const adminId = currentUser?.id ?? 1;
     try {
       const res = await fetch(
         `${API_URL}/months/${year}/${month}/days/${date}/workday`,
@@ -178,7 +178,7 @@ export default function TeamCalendarView() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "X-User-Id": "1",
+            "X-User-Id": String(adminId),
           },
           body: JSON.stringify({ is_workday_override: isWorkdayOverride }),
         }
@@ -198,6 +198,7 @@ export default function TeamCalendarView() {
   };
 
   const handleToggleHoliday = async (date: string, isHoliday: boolean) => {
+    const adminId = currentUser?.id ?? 1;
     try {
       const res = await fetch(
         `${API_URL}/months/${year}/${month}/days/${date}/holiday`,
@@ -205,7 +206,7 @@ export default function TeamCalendarView() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "X-User-Id": "1",
+            "X-User-Id": String(adminId),
           },
           body: JSON.stringify({ is_holiday: isHoliday }),
         }
