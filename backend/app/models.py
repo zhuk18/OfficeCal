@@ -47,7 +47,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     display_name: Mapped[str] = mapped_column(String(160), index=True, nullable=False)
-    email: Mapped[str] = mapped_column(String(200), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(200), unique=True, nullable=False)
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.employee, nullable=False)
     annual_remote_limit: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
