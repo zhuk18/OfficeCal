@@ -2,18 +2,52 @@ from __future__ import annotations
 
 import calendar
 from datetime import date
+from typing import Final
+
+
+# Constants
+VACATION_DAYS_PER_YEAR: Final[int] = 20
+VACATION_DAYS_PER_MONTH: Final[float] = VACATION_DAYS_PER_YEAR / 12
 
 
 def month_days(year: int, month: int) -> list[date]:
+    """
+    Get all days in a month.
+    
+    Args:
+        year: Year
+        month: Month (1-12)
+    
+    Returns:
+        List of date objects for each day in the month
+    """
     last_day = calendar.monthrange(year, month)[1]
     return [date(year, month, day) for day in range(1, last_day + 1)]
 
 
 def weekday_name(day: date) -> str:
+    """
+    Get abbreviated weekday name.
+    
+    Args:
+        day: Date object
+    
+    Returns:
+        Abbreviated weekday name (Mon, Tue, etc.)
+    """
     return day.strftime("%a")
 
 
 def is_weekend(day: date) -> bool:
+    """
+    Check if a date falls on a weekend.
+    
+    Args:
+        day: Date object
+    
+    Returns:
+        True if Saturday or Sunday, False otherwise
+    """
     return day.weekday() >= 5
 
 
