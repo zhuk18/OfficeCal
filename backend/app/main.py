@@ -5,11 +5,13 @@ import os
 from contextlib import asynccontextmanager
 from datetime import date, timedelta
 from typing import Annotated
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
@@ -71,6 +73,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Mount frontend static files if they exist (for Docker deployment)
+frontend_static = Path(__file__).parent / "static"
+if frontend_static.exists():
+    app.mount("/", StaticFiles(directory=frontend_static, html=True), name="frontend")
 
 
 # Global exception handler
