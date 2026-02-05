@@ -1,11 +1,9 @@
 services:
   - type: web
     name: officecalendar-backend
-    env: python
+    runtime: docker
     region: oregon
     plan: free
-    buildCommand: cd backend && pip install -r requirements.txt
-    startCommand: cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12
+      - key: DATABASE_URL
+        value: postgresql+psycopg://postgres.asgaklfqlgzqriwdihyd:MzZTaRK0OwXWlnvK@aws-1-eu-central-1.pooler.supabase.com:5432/postgres
