@@ -23,7 +23,7 @@ export default function App() {
   return (
     <div className="app">
       <nav className="navbar">
-        <div className="nav-brand">OfficeCal</div>
+        <div className="nav-brand">OfficeCalendar</div>
         <div className="nav-buttons">
           <button
             className={`nav-btn ${view === "team" ? "active" : ""}`}

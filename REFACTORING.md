@@ -1,7 +1,7 @@
-# OfficeCal - Refactoring Summary
+# OfficeCalendar - Refactoring Summary
 
 ## Overview
-This document summarizes the comprehensive refactoring of the OfficeCal application following modern software development best practices and latest trends (as of 2024).
+This document summarizes the comprehensive refactoring of the OfficeCalendar application following modern software development best practices and latest trends (as of 2024).
 
 ---
 
@@ -376,7 +376,7 @@ export const STATUS_LABELS: Record<DayStatus, string> = {
 2. **Environment Variables** (recommended):
    ```bash
    export ENVIRONMENT=development
-   export DATABASE_URL=sqlite:///./officecal.db
+   export DATABASE_URL=sqlite:///./officecalendar.db
    export ALLOWED_ORIGINS=http://localhost:5173
    ```
 

@@ -1,4 +1,4 @@
-# OfficeCal - Developer Quick Reference
+# OfficeCalendar - Developer Quick Reference
 
 ## Quick Start
 

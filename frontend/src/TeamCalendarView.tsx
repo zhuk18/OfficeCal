@@ -276,7 +276,7 @@ export default function TeamCalendarView() {
     XLSX.utils.book_append_sheet(wb, ws, monthName);
 
     // Export
-    XLSX.writeFile(wb, `OfficeCal-${year}-${String(month).padStart(2, "0")}.xlsx`);
+    XLSX.writeFile(wb, `OfficeCalendar-${year}-${String(month).padStart(2, "0")}.xlsx`);
   };
 
   return (

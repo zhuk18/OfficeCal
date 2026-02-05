@@ -27,7 +27,7 @@ env/
 
 # Database
 *.db
-officecal.db
+officecalendar.db
 
 # Node/Frontend
 frontend/node_modules/

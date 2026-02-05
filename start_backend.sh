@@ -1,4 +1,4 @@
 #!/bin/bash
-cd /home/zhuk/work/OfficeCal/backend
+cd /home/zhuk/work/OfficeCalendar/backend
 source myenv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000

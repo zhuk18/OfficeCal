@@ -1,4 +1,4 @@
-# OfficeCal MVP - Hybrid Work Calendar
+# OfficeCalendar MVP - Hybrid Work Calendar
 
 Replace Excel-based monthly hybrid work planning with a modern web application. Track employee work locations, manage remote day limits, and view team schedules.
 
@@ -81,7 +81,7 @@ python -m app.seed
 8. Region: Oregon (or your preference)
 9. Deploy
 
-**Note:** Copy the deployed URL (e.g., `https://officecal-backend.onrender.com`) for the frontend configuration.
+**Note:** Copy the deployed URL (e.g., `https://officecalendar-backend.onrender.com`) for the frontend configuration.
 
 ### Frontend (Netlify)
 

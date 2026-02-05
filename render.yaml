@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: officecal-backend
+    name: officecalendar-backend
     env: python
     region: oregon
     plan: free

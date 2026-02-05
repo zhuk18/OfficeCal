@@ -13,8 +13,8 @@ load_dotenv()
 
 # Database URL - supports SQLite, PostgreSQL, and MySQL
 # For Supabase (PostgreSQL): postgresql://user:password@host:5432/database
-# For SQLite: sqlite:///./officecal.db
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./officecal.db")
+# For SQLite: sqlite:///./officecalendar.db
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./officecalendar.db")
 
 # Configure engine with appropriate settings
 engine_kwargs = {
